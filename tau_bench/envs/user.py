@@ -44,9 +44,17 @@ class LLMUserSimulationEnv(BaseUserSimulationEnv):
         self.reset()
 
     def generate_next_message(self, messages: List[Dict[str, Any]]) -> str:
-        res = completion(
-            model=self.model, custom_llm_provider=self.provider, messages=messages
-        )
+        if self.provider == "hosted_vllm":
+            res = completion(
+                api_base="http://0.0.0.0:8000/v1",
+                messages=messages,
+                model=self.model,
+                custom_llm_provider=self.provider,
+            )
+        else:
+            res = completion(
+                model=self.model, custom_llm_provider=self.provider, messages=messages
+            )
         message = res.choices[0].message
         self.messages.append(message.model_dump())
         self.total_cost = res._hidden_params["response_cost"]
@@ -164,9 +172,17 @@ class VerifyUserSimulationEnv(LLMUserSimulationEnv):
         attempts = 0
         cur_message = None
         while attempts < self.max_attempts:
-            res = completion(
-                model=self.model, custom_llm_provider=self.provider, messages=messages
-            )
+            if self.provider == "hosted_vllm":
+                res = completion(
+                    api_base="http://0.0.0.0:8000/v1",
+                    messages=messages,
+                    model=self.model,
+                    custom_llm_provider=self.provider,
+                )
+            else:
+                res = completion(
+                    model=self.model, custom_llm_provider=self.provider, messages=messages
+                )
             cur_message = res.choices[0].message
             self.total_cost = res._hidden_params["response_cost"]
             if verify(self.model, self.provider, cur_message, messages):

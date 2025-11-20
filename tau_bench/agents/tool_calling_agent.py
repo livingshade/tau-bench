@@ -37,13 +37,23 @@ class ToolCallingAgent(Agent):
             {"role": "user", "content": obs},
         ]
         for _ in range(max_num_steps):
-            res = completion(
-                messages=messages,
-                model=self.model,
-                custom_llm_provider=self.provider,
-                tools=self.tools_info,
-                temperature=self.temperature,
-            )
+            if self.provider == "hosted_vllm":
+                res = completion(
+                    api_base="http://0.0.0.0:8000/v1",
+                    messages=messages,
+                    model=self.model,
+                    custom_llm_provider=self.provider,
+                    tools=self.tools_info,
+                    temperature=self.temperature,
+                )
+            else:
+                res = completion(
+                    messages=messages,
+                    model=self.model,
+                    custom_llm_provider=self.provider,
+                    tools=self.tools_info,
+                    temperature=self.temperature,
+                )
             next_message = res.choices[0].message.model_dump()
             total_cost += res._hidden_params["response_cost"] or 0
             action = message_to_action(next_message)

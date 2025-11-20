@@ -6,6 +6,8 @@ from tau_bench.run import run
 from litellm import provider_list
 from tau_bench.envs.user import UserStrategy
 
+import litellm
+# litellm._turn_on_debug()
 
 def parse_args() -> RunConfig:
     parser = argparse.ArgumentParser()
