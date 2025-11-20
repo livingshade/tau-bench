@@ -29,14 +29,18 @@ class ToolCallingAgent(Agent):
     ) -> SolveResult:
         total_cost = 0.0
         env_reset_res = env.reset(task_index=task_index)
+        env_prompt = env.user.messages
         obs = env_reset_res.observation
+        if "</think>" in obs:
+            obs = obs.split("</think>")[-1].strip("</think>")
         info = env_reset_res.info.model_dump()
         reward = 0.0
         messages: List[Dict[str, Any]] = [
             {"role": "system", "content": self.wiki},
             {"role": "user", "content": obs},
         ]
-        for _ in range(max_num_steps):
+        full_log = []
+        for i in range(max_num_steps):
             if self.provider == "hosted_vllm":
                 res = completion(
                     api_base="http://0.0.0.0:8000/v1",
@@ -80,9 +84,22 @@ class ToolCallingAgent(Agent):
                         {"role": "user", "content": env_response.observation},
                     ]
                 )
+            full_log.append(
+                {
+                    "step": i,
+                    "agent": res.model_dump(),
+                    "env": env_response.model_dump()
+                }
+            )
             if env_response.done:
                 break
         return SolveResult(
+            full_log={
+                "init_obs": obs,
+                "agent_system_prompt": self.wiki,
+                "traj": full_log,
+                "env_traj": env_prompt,
+            },
             reward=reward,
             info=info,
             messages=messages,

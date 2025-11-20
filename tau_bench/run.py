@@ -27,7 +27,14 @@ def run(config: RunConfig) -> List[EnvRunResult]:
 
     random.seed(config.seed)
     time_str = datetime.now().strftime("%m%d%H%M%S")
-    ckpt_path = f"{config.log_dir}/{config.agent_strategy}-{config.model.split('/')[-1]}-{config.temperature}_range_{config.start_index}-{config.end_index}_user-{config.user_model}-{config.user_strategy}_{time_str}.json"
+    user_model_filename = config.user_model.replace("/", "@")
+    ckpt_path = f"{config.log_dir}/{config.agent_strategy}-{config.model.split('/')[-1]}-{config.temperature}_range_{config.start_index}-{config.end_index}_user-{user_model_filename}-{config.user_strategy}_{time_str}.json"
+    
+    log_path = f"logs/{config.agent_strategy}-{config.model.split('/')[-1]}-{config.temperature}_range_{config.start_index}-{config.end_index}_user-{user_model_filename}-{config.user_strategy}_{time_str}.json"
+    
+    if not os.path.exists(log_path):
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    
     if not os.path.exists(config.log_dir):
         os.makedirs(config.log_dir)
 
@@ -107,6 +114,8 @@ def run(config: RunConfig) -> List[EnvRunResult]:
                         data = json.load(f)
                 with open(ckpt_path, "w") as f:
                     json.dump(data + [result.model_dump()], f, indent=2)
+            with open(log_path, "a") as f:
+                json.dump(res.full_log, f)
             return result
 
         with ThreadPoolExecutor(max_workers=config.max_concurrency) as executor:
@@ -115,7 +124,7 @@ def run(config: RunConfig) -> List[EnvRunResult]:
 
     display_metrics(results)
 
-    with open(ckpt_path, "w") as f:
+    with open(ckpt_path, "w+") as f:
         json.dump([result.model_dump() for result in results], f, indent=2)
         print(f"\n📄 Results saved to {ckpt_path}\n")
     return results

@@ -36,6 +36,7 @@ class RewardResult(BaseModel):
 
 
 class SolveResult(BaseModel):
+    full_log: Any
     reward: float
     messages: List[Dict[str, Any]]
     info: Dict[str, Any]
