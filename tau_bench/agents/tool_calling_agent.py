@@ -1,6 +1,7 @@
 # Copyright Sierra
 
 import json
+import os
 from litellm import completion
 from typing import List, Optional, Dict, Any
 
@@ -42,8 +43,9 @@ class ToolCallingAgent(Agent):
         full_log = []
         for i in range(max_num_steps):
             if self.provider == "hosted_vllm":
+                api_base = os.environ.get("AGENT_API_BASE")
                 res = completion(
-                    api_base="http://0.0.0.0:8000/v1",
+                    api_base=api_base,
                     messages=messages,
                     model=self.model,
                     custom_llm_provider=self.provider,
