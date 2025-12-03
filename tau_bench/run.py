@@ -114,8 +114,11 @@ def run(config: RunConfig) -> List[EnvRunResult]:
                         data = json.load(f)
                 with open(ckpt_path, "w") as f:
                     json.dump(data + [result.model_dump()], f, indent=2)
-            with open(log_path, "a") as f:
-                json.dump(res.full_log, f)
+            try:
+                with open(log_path, "a") as f:
+                    json.dump(res.full_log, f)
+            except Exception as e:
+                print("Error dumping", e)
             return result
 
         with ThreadPoolExecutor(max_workers=config.max_concurrency) as executor:
